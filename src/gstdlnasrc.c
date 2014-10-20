@@ -477,7 +477,9 @@ gst_dlna_src_finalize (GObject * object)
   dlna_src_head_response_free_struct (dlna_src, dlna_src->server_info);
 
   g_free (dlna_src->dtcp_key_storage);
+  dlna_src->dtcp_key_storage = NULL;
   g_free (dlna_src->uri);
+  dlna_src->uri = NULL;
   if (dlna_src->soup_msg)
     g_object_unref (dlna_src->soup_msg);
 
@@ -834,9 +836,14 @@ dlna_src_handle_query_seeking (GstDlnaSrc * dlna_src, GstQuery * query)
           G_GUINT64_FORMAT ", end %" G_GUINT64_FORMAT,
           dlna_src->byte_start, dlna_src->byte_end);
 
-    } else
+    } else {
+
       GST_INFO_OBJECT (dlna_src,
           "Seeking in bytes not available for content item");
+
+      gst_query_set_seeking (query, GST_FORMAT_BYTES, FALSE, seek_start, seek_end);
+      ret = TRUE;
+    }
   } else if (format == GST_FORMAT_TIME) {
     if (dlna_src->time_seek_supported) {
       gst_query_set_seeking (query, GST_FORMAT_TIME, TRUE,
@@ -848,9 +855,14 @@ dlna_src_handle_query_seeking (GstDlnaSrc * dlna_src, GstQuery * query)
           GST_TIME_FORMAT ", end %" GST_TIME_FORMAT,
           GST_TIME_ARGS (dlna_src->npt_start_nanos),
           GST_TIME_ARGS (dlna_src->npt_end_nanos));
-    } else
+    } else {
+
       GST_DEBUG_OBJECT (dlna_src,
           "Seeking in media time not available for content item");
+
+      gst_query_set_seeking (query, GST_FORMAT_TIME, FALSE, seek_start, seek_end);
+      ret = TRUE;
+    }
   } else {
     GST_DEBUG_OBJECT (dlna_src,
         "Got seeking query with non-supported format type: %s, passing to default handler",
@@ -1028,17 +1040,18 @@ dlna_src_handle_event_seek (GstDlnaSrc * dlna_src, GstPad * pad,
     if (dlna_src->handled_time_seek_seqnum) {
       GST_INFO_OBJECT (dlna_src, "Already processed seek event %d", new_seqnum);
       return FALSE;
-    } else
+    } else {
       /* *TODO* - see dlnasrc issue #63
          Got same event now byte based since some element converted it to bytes
          Convert here if time seek is supported since it is more accurate */
-    if (dlna_src->time_seek_supported) {
-      convert_start = TRUE;
-      GST_INFO_OBJECT (dlna_src,
-          "Set flag to convert time based seek to byte since server does support time seeks");
-    } else
-      GST_INFO_OBJECT (dlna_src,
-          "Unable to convert time based seek to byte since server does not support time seeks");
+      if (dlna_src->time_seek_supported) {
+        convert_start = TRUE;
+        GST_INFO_OBJECT (dlna_src,
+            "Set flag to convert time based seek to byte since server does support time seeks");
+      } else
+        GST_INFO_OBJECT (dlna_src,
+            "Unable to convert time based seek to byte since server does not support time seeks");
+    }
   } else {
     dlna_src->handled_time_seek_seqnum = FALSE;
     dlna_src->time_seek_seqnum = new_seqnum;
@@ -2024,10 +2037,15 @@ dlna_src_head_response_free_struct (GstDlnaSrc * dlna_src,
   g_free (dlna_src->npt_end_str);
   g_free (dlna_src->npt_duration_str);
 
+  dlna_src->npt_start_str = NULL;
+  dlna_src->npt_end_str = NULL;
+  dlna_src->npt_duration_str = NULL;
+
   int i = 0;
   if (head_response) {
     if (head_response->content_features) {
       g_free (head_response->content_features->profile);
+      head_response->content_features->profile = NULL;
 
       for (i = 0; i < PLAYSPEEDS_MAX_CNT; i++)
         g_free (head_response->content_features->playspeed_strs[i]);
@@ -2050,6 +2068,21 @@ dlna_src_head_response_free_struct (GstDlnaSrc * dlna_src,
     g_free (head_response->dtcp_host);
     g_free (head_response->available_seek_npt_start_str);
     g_free (head_response->available_seek_npt_end_str);
+
+    head_response->http_rev = NULL;
+    head_response->ret_msg = NULL;
+    head_response->accept_ranges = NULL;
+    head_response->time_seek_npt_start_str = NULL;
+    head_response->time_seek_npt_end_str = NULL;
+    head_response->time_seek_npt_duration_str = NULL;
+    head_response->transfer_mode = NULL;
+    head_response->transfer_encoding = NULL;
+    head_response->date = NULL;
+    head_response->server = NULL;
+    head_response->content_type = NULL;
+    head_response->dtcp_host = NULL;
+    head_response->available_seek_npt_start_str = NULL;
+    head_response->available_seek_npt_end_str = NULL;
 
     g_slice_free (GstDlnaSrcHeadResponse, head_response);
   }
@@ -3192,6 +3225,7 @@ dlna_src_head_response_is_flag_set (GstDlnaSrc * dlna_src,
   value = strtoll (tmp_str, NULL, 16);
 
   g_free (tmp_str);
+  tmp_str = NULL;
 
   return (value & flag) == flag;
 }
