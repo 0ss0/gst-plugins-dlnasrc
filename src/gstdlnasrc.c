@@ -477,9 +477,7 @@ gst_dlna_src_finalize (GObject * object)
   dlna_src_head_response_free_struct (dlna_src, dlna_src->server_info);
 
   g_free (dlna_src->dtcp_key_storage);
-  dlna_src->dtcp_key_storage = NULL;
   g_free (dlna_src->uri);
-  dlna_src->uri = NULL;
   if (dlna_src->soup_msg)
     g_object_unref (dlna_src->soup_msg);
 
@@ -2045,7 +2043,6 @@ dlna_src_head_response_free_struct (GstDlnaSrc * dlna_src,
   if (head_response) {
     if (head_response->content_features) {
       g_free (head_response->content_features->profile);
-      head_response->content_features->profile = NULL;
 
       for (i = 0; i < PLAYSPEEDS_MAX_CNT; i++)
         g_free (head_response->content_features->playspeed_strs[i]);
@@ -2068,21 +2065,6 @@ dlna_src_head_response_free_struct (GstDlnaSrc * dlna_src,
     g_free (head_response->dtcp_host);
     g_free (head_response->available_seek_npt_start_str);
     g_free (head_response->available_seek_npt_end_str);
-
-    head_response->http_rev = NULL;
-    head_response->ret_msg = NULL;
-    head_response->accept_ranges = NULL;
-    head_response->time_seek_npt_start_str = NULL;
-    head_response->time_seek_npt_end_str = NULL;
-    head_response->time_seek_npt_duration_str = NULL;
-    head_response->transfer_mode = NULL;
-    head_response->transfer_encoding = NULL;
-    head_response->date = NULL;
-    head_response->server = NULL;
-    head_response->content_type = NULL;
-    head_response->dtcp_host = NULL;
-    head_response->available_seek_npt_start_str = NULL;
-    head_response->available_seek_npt_end_str = NULL;
 
     g_slice_free (GstDlnaSrcHeadResponse, head_response);
   }
