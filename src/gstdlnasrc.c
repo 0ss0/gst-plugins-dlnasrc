@@ -2044,6 +2044,8 @@ dlna_src_head_response_free_struct (GstDlnaSrc * dlna_src,
     if (head_response->content_features) {
       g_free (head_response->content_features->profile);
 
+      /* Reset playspeeds_cnt in case of invalid g_free when PLAYSPEEDS_MAX_CNT reached */
+      head_response->content_features->playspeeds_cnt = 0;
       for (i = 0; i < PLAYSPEEDS_MAX_CNT; i++)
         g_free (head_response->content_features->playspeed_strs[i]);
 
@@ -2920,6 +2922,7 @@ dlna_src_head_response_parse_playspeeds (GstDlnaSrc * dlna_src,
   gfloat rate = 0;
   int d;
   int n;
+  int i;
   gchar **tokens;
   gchar **ptr;
 
@@ -2933,6 +2936,13 @@ dlna_src_head_response_parse_playspeeds (GstDlnaSrc * dlna_src,
   } else {
     GST_LOG_OBJECT (dlna_src, "PS Field value: %s", tmp2);
 
+    /* Release playspeeds string */
+    for (i = 0; i < head_response->content_features->playspeeds_cnt; i++) {
+      g_free (head_response->content_features->playspeed_strs[i]);
+    }
+    /* Reset playspeeds count */
+    head_response->content_features->playspeeds_cnt = 0;
+
     /* Tokenize list of comma separated playspeeds */
     tokens = g_strsplit (tmp2, ",", PLAYSPEEDS_MAX_CNT);
     for (ptr = tokens; *ptr; ptr++) {
@@ -2940,8 +2950,6 @@ dlna_src_head_response_parse_playspeeds (GstDlnaSrc * dlna_src,
         GST_LOG_OBJECT (dlna_src, "Found PS: %s", *ptr);
 
         /* Store string representation to facilitate fractional string conversion */
-        g_free (head_response->content_features->playspeed_strs
-            [head_response->content_features->playspeeds_cnt]);
         head_response->content_features->playspeed_strs
             [head_response->content_features->playspeeds_cnt]
             = g_strdup (*ptr);
@@ -2974,6 +2982,8 @@ dlna_src_head_response_parse_playspeeds (GstDlnaSrc * dlna_src,
           }
         }
         head_response->content_features->playspeeds_cnt++;
+        if (head_response->content_features->playspeeds_cnt >= PLAYSPEEDS_MAX_CNT)
+          continue;
       }
     }
     g_strfreev (tokens);
