@@ -839,7 +839,8 @@ dlna_src_handle_query_seeking (GstDlnaSrc * dlna_src, GstQuery * query)
       GST_INFO_OBJECT (dlna_src,
           "Seeking in bytes not available for content item");
 
-      gst_query_set_seeking (query, GST_FORMAT_BYTES, FALSE, seek_start, seek_end);
+      gst_query_set_seeking (query, GST_FORMAT_BYTES, FALSE, seek_start,
+          seek_end);
       ret = TRUE;
     }
   } else if (format == GST_FORMAT_TIME) {
@@ -858,7 +859,8 @@ dlna_src_handle_query_seeking (GstDlnaSrc * dlna_src, GstQuery * query)
       GST_DEBUG_OBJECT (dlna_src,
           "Seeking in media time not available for content item");
 
-      gst_query_set_seeking (query, GST_FORMAT_TIME, FALSE, seek_start, seek_end);
+      gst_query_set_seeking (query, GST_FORMAT_TIME, FALSE, seek_start,
+          seek_end);
       ret = TRUE;
     }
   } else {
@@ -2962,9 +2964,8 @@ dlna_src_head_response_parse_playspeeds (GstDlnaSrc * dlna_src,
                 "Problems converting playspeed %s into numeric value", *ptr);
             return FALSE;
           } else {
-            head_response->content_features->
-                playspeeds[head_response->content_features->playspeeds_cnt] =
-                rate;
+            head_response->content_features->playspeeds[head_response->
+                content_features->playspeeds_cnt] = rate;
           }
         } else {
           /* Handle conversion of fractional string into float, needed when specifying rate */
@@ -2976,13 +2977,13 @@ dlna_src_head_response_parse_playspeeds (GstDlnaSrc * dlna_src,
           } else {
             rate = (gfloat) n / (gfloat) d;
 
-            head_response->content_features->
-                playspeeds[head_response->content_features->playspeeds_cnt] =
-                rate;
+            head_response->content_features->playspeeds[head_response->
+                content_features->playspeeds_cnt] = rate;
           }
         }
         head_response->content_features->playspeeds_cnt++;
-        if (head_response->content_features->playspeeds_cnt >= PLAYSPEEDS_MAX_CNT)
+        if (head_response->content_features->playspeeds_cnt >=
+            PLAYSPEEDS_MAX_CNT)
           continue;
       }
     }
